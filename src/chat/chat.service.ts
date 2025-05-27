@@ -8,6 +8,9 @@ export class ChatService {
   // 쌍의 메시지 저장 
   private roomMessages: Map<string, any[]> = new Map();
 
+  // roomId별로 참여자 목록을 관리해야 합니다.
+  private roomUsers: Map<string, Set<string>> = new Map();
+
   // 두 유저의 대화방 key
   private getChatKey(user1: string, user2: string): string {
     return [user1, user2].sort().join('_');
@@ -25,6 +28,21 @@ export class ChatService {
     return this.roomMessages.get(roomId) || [];
   }
 
+  // 메시지 push
+  broadcastToRoom(roomId: string, message: any) {
+    const users = this.roomUsers.get(roomId);
+    if (!users) return;
+    for (const userId of users) {
+      this.sendMessageToUser(userId, message);
+    }
+  }
+
+  addUserToRoom(roomId: string, userId: string) {
+    if (!this.roomUsers.has(roomId)) {
+      this.roomUsers.set(roomId, new Set());
+    }
+    this.roomUsers.get(roomId).add(userId);
+  }
 
   getUserStream(userId: string): Observable<any> {
     let subject = this.userStreams.get(userId);

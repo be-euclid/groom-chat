@@ -7,7 +7,10 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Sse('sse/:userId')
-  sse(@Param('userId') userId: string): Observable<any> {
+  sse(@Param('userId') userId: string, @Query('roomId') roomId?: string): Observable<any> {
+    if (roomId) {
+      this.chatService.addUserToRoom(roomId, userId);
+    }
     return this.chatService.getUserStream(userId);
   }
   // 1:1 대화 내역 조회
@@ -32,6 +35,7 @@ export class ChatController {
       },
     };
     this.chatService.saveMessage(body.roomId, msg);
+    this.chatService.broadcastToRoom(body.roomId, msg);
     return { status: 'ok' };
   }
 

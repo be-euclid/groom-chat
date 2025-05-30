@@ -6,12 +6,12 @@ import { ChatService } from './chat.service';
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  @Sse('sse/:userId')
-  sse(@Param('userId') userId: string, @Query('roomId') roomId?: string): Observable<any> {
+  @Sse('sse/:uuid')
+  sse(@Param('uuid') uuid: number, @Query('roomId') roomId?: string): Observable<any> {
     if (roomId) {
-      this.chatService.addUserToRoom(roomId, userId);
+      this.chatService.addUserToRoom(roomId, uuid);
     }
-    return this.chatService.getUserStream(userId);
+    return this.chatService.getUserStream(uuid);
   }
   // 1:1 대화 내역 조회
   @Get('history')
@@ -23,12 +23,12 @@ export class ChatController {
   // 메시지 전송시 from 정보도 함께 전달
   @Post('send')
   sendMessage(
-    @Body() body: { roomId: string; username: string; message: string; timestamp: string; image?: string; from?: string }
+    @Body() body: { roomId: string; nickname: string; message: string; timestamp: string; image?: string; from?: string }
   ) {
     const msg = {
       event: 'new_message',
       data: {
-        username: body.username,
+        username: body.nickname,
         message: body.message,
         timestamp: body.timestamp,
         ...(body.image && { image: body.image }),
@@ -47,12 +47,12 @@ export class ChatController {
   // 유저 입장 알림
   @Post('join')
   userJoined(
-    @Body() body: { to: string; username: string; message: string; timestamp: string }
+    @Body() body: { to: string; nickname: string; message: string; timestamp: string }
   ) {
-    this.chatService.sendMessageToUser(body.to, {
+    this.chatService.sendMessageToUser(Number(body.to), {
       event: 'user_joined',
       data: {
-        username: body.username,
+        username: body.nickname,
         message: body.message,
         timestamp: body.timestamp,
       },
@@ -63,12 +63,12 @@ export class ChatController {
   // 유저 퇴장 알림
   @Post('leave')
   userLeft(
-    @Body() body: { to: string; username: string; message: string; timestamp: string }
+    @Body() body: { to: string; nickname: string; message: string; timestamp: string }
   ) {
-    this.chatService.sendMessageToUser(body.to, {
+    this.chatService.sendMessageToUser(Number(body.to), {
       event: 'user_left',
       data: {
-        username: body.username,
+        username: body.nickname,
         message: body.message,
         timestamp: body.timestamp,
       },
